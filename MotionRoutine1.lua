@@ -37,10 +37,8 @@ if tonumber(fibaro:getValue(158, "value")) > 0 and tonumber(fibaro:getValue(158,
         fibaro:call(29, "setValue", "5") -- Tafel eethoek (5%)
         fibaro:call(106 , "turnOn") -- Bolles (aan)
         fibaro:call(118 , "turnOn") -- Spot voordeur (aan)
-        fibaro:call(156, "sendPush", "Started wake-up routine. Debug: " .. currentLux .. " lx")
       else
         fibaro:debug("Illuminance measuring " .. currentLux .. " lx, do nothing.")
-        fibaro:call(156, "sendPush", "Skipped wake-up routine. Debug: " .. currentLux .. " lx")
       end
     end
   end 
