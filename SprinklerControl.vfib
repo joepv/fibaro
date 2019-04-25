@@ -1,0 +1,107 @@
+{
+    "name": "Sprinkler Control",
+    "type": "virtual_device",
+    "properties": {
+      "deviceIcon": 1007,
+      "currentIcon": "1007",
+      "log": "",
+      "logTemp": "",
+      "mainLoop": "",
+      "ui.lblStatus.value": "Off",
+      "ui.lblTimeOut.value": "--:--",
+      "visible": "true",
+      "rows": [
+        {
+          "type": "label",
+          "elements": [
+            {
+              "id": 1,
+              "lua": false,
+              "waitForResponse": false,
+              "caption": "Status",
+              "name": "lblStatus",
+              "favourite": false,
+              "main": true
+            }
+          ]
+        },
+        {
+          "type": "label",
+          "elements": [
+            {
+              "id": 2,
+              "lua": false,
+              "waitForResponse": false,
+              "caption": "Turn off at",
+              "name": "lblTimeOut",
+              "favourite": false,
+              "main": false
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "elements": [
+            {
+              "id": 3,
+              "lua": true,
+              "waitForResponse": false,
+              "caption": "15 minutes",
+              "name": "Button1",
+              "empty": false,
+              "msg": "fibaro:startScene(41, {15})",
+              "buttonIcon": 0,
+              "favourite": false,
+              "main": true
+            },
+            {
+              "id": 4,
+              "lua": true,
+              "waitForResponse": false,
+              "caption": "30 minutes",
+              "name": "Button2",
+              "empty": false,
+              "msg": "fibaro:startScene(41, {30})",
+              "buttonIcon": 0,
+              "favourite": false,
+              "main": false
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "elements": [
+            {
+              "id": 5,
+              "lua": true,
+              "waitForResponse": false,
+              "caption": "60 minutes",
+              "name": "Button3",
+              "empty": false,
+              "msg": "fibaro:startScene(41, {60})",
+              "buttonIcon": 0,
+              "favourite": false,
+              "main": false
+            },
+            {
+              "id": 6,
+              "lua": true,
+              "waitForResponse": false,
+              "caption": "Turn off",
+              "name": "Button4",
+              "empty": false,
+              "msg": "fibaro:call(170, \"turnOff\") -- Device ID",
+              "buttonIcon": 0,
+              "favourite": false,
+              "main": false
+            }
+          ]
+        }
+      ]
+    },
+    "actions": {
+      "pressButton": 1,
+      "setSlider": 2,
+      "setProperty": 2
+    }
+  }
