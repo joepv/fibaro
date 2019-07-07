@@ -17,7 +17,7 @@ A LUA scene to control your robot mower when it rains.
 Copyright (c)1992-2019 Joep Verhaeg <info@joepverhaeg.nl>
 
 Documentation:
-https://docs.joepverhaeg.nl/sprinklercontrol/
+https://docs.joepverhaeg.nl/mowercontrol/
 --]]
 
 if fibaro:countScenes() > 1 then
