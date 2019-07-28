@@ -44,10 +44,13 @@ if fibaro:countScenes() > 1 then
       if (tonumber(severity) == 3) then
           color = "#FF5716" -- gardena logo orange
       end
+      if (tonumber(severity) == 4) then
+        color = "#4D5DFF" -- Buienradar blue
+      end
       if (tonumber(severity) == 83) then
           color = "#00AEBD" -- gardena sileno green
       end
-      if (debug == true or tonumber(severity) == 1 or tonumber(severity) == 3) then
+      if (debug == true or tonumber(severity) == 1 or tonumber(severity) == 3 or tonumber(severity) == 4) then
           fibaro:debug("<span style=\"color: " .. color .. "\">" .. os.date("%a, %b %d") .. " " .. message .. "</span>")
       end
   end
@@ -282,7 +285,7 @@ if fibaro:countScenes() > 1 then
       
       local rainloglevel = 2
       if (tonumber(neerslag) > 0) then
-        local rainloglevel = 3
+          rainloglevel = 3
       end
       log("<strong>BuitenRadar</strong>: rain: " .. neerslag .. " | time: " .. tijd .. " | intensity: " .. intensiteit, rainloglevel)
   
@@ -291,71 +294,78 @@ if fibaro:countScenes() > 1 then
           if (intensiteit == 0) then
               -- het regent niet meer, doe niets tot tijd is verstreken...
               -- zet vd label dat de regen stop actief is?
-          elseif (intensiteit*10 <=50) then -- ***** DIT NAKIJKEN, WANT WAAROM KIJK IK NAAR PREVIOUS?
-              rainDelayVar = intensiteit .. "|" .. currentime+7200
+          elseif (intensiteit*10 <=50 and tonumber(fibaro:getGlobalValue("MowerPushSend")) == 2) then -- ***** DIT NAKIJKEN, WANT WAAROM KIJK IK NAAR PREVIOUS?
+              rainDelayVar = intensiteit .. "|" .. currentime+7200 -- 2 hours
               fibaro:setGlobal("MowerRainDelay", rainDelayVar)
               -- mower is parked, do nothing
           else
-              -- just park until tomorrow, rain is getting worse...
-              rainDelayVar = intensiteit .. "|0"
+              -- park for eight hours, rain is getting worse...
+              rainDelayVar = intensiteit .. "|" .. currentime+28800 -- 8 hours
               fibaro:setGlobal("MowerRainDelay", rainDelayVar)
               -- park mower until tomorrow
               if (tonumber(fibaro:getGlobalValue("MowerPushSend")) ~= 5) then
-                  fibaro:call(phoneId, "sendPush", "Maaier wordt tot morgen geparkeerd i.v.m. aanhoudende zware buien.")
-                  sendMowerCommand("park_until_next_timer")
+                  fibaro:call(phoneId, "sendPush", "Maaier wordt voor langere tijd geparkeerd i.v.m. aanhoudende zware buien.")
+                  --sendMowerCommand("park_until_next_timer") -- this doesn't work, so I set 8 hours...
                   fibaro:setGlobal("MowerPushSend", 5)
+                  log(intensiteit .. ' mm/h rain detected, intensity changed, park mower for min. 8 hours.', 4)
               end
           end
       else
           -- if mower is parked do nothing
-          if (not mowerState:match("parked")) then
-              -- rain delay is not active...
-              -- check if rain delay was active...
+          if (not mowerState:match("parked")) then              
+              -- rain delay is not active, do check for rain!
+              if (intensiteit == 0) then
+                  -- no rain!
+                  if (tonumber(fibaro:getGlobalValue("MowerPushSend")) ~= 0) then
+                  fibaro:setGlobal("MowerPushSend", 0)
+                  end
+              elseif ((intensiteit*10) <= 20) then -- muliply by 10 because of stupid float and if statement.
+                  rainDelayVar = intensiteit .. "|0"
+                  fibaro:setGlobal("MowerRainDelay", rainDelayVar)
+                  if (tonumber(fibaro:getGlobalValue("MowerPushSend")) ~= 1) then 
+                      fibaro:call(phoneId, "sendPush", "Maaier wordt niet geparkeerd ondanks " .. intensiteit .. " mm/u neerslag om " .. tijd)
+                      fibaro:setGlobal("MowerPushSend", 1)
+                      log(intensiteit .. ' mm/h rain detected, but keep mowing.', 4)
+                  end
+              elseif ((intensiteit*10) <= 50) then
+                  rainDelayVar = intensiteit .. "|" .. currentime+7200 -- 2 hours
+                  fibaro:setGlobal("MowerRainDelay", rainDelayVar)
+                  -- park mower
+                  if (tonumber(fibaro:getGlobalValue("MowerPushSend")) ~= 2) then 
+                      fibaro:call(phoneId, "sendPush", "Maaier wordt tijdelijk geparkeerd i.v.m. " .. intensiteit .. " mm/u neerslag om " .. tijd)
+                      sendMowerCommand("park_until_further_notice")
+                      fibaro:setGlobal("MowerPushSend", 2)
+                      log(intensiteit .. ' mm/h rain detected, park mower for min. 2 hours.', 4)
+                  end
+              else
+                  -- just park until tomorrow, its raining a lot...
+                  rainDelayVar = intensiteit .. "|" .. currentime+28800 -- 8 hours
+                  fibaro:setGlobal("MowerRainDelay", rainDelayVar)
+                  -- park mower until tomorrow
+                  if (tonumber(fibaro:getGlobalValue("MowerPushSend")) ~= 5) then 
+                      fibaro:call(phoneId, "sendPush", "Maaier wordt voor langere tijd geparkeerd i.v.m. " .. intensiteit .. " mm/u neerslag om " .. tijd)
+                      sendMowerCommand("park_until_further_notice")
+                      fibaro:setGlobal("MowerPushSend", 5)
+                      log(intensiteit .. ' mm/h rain detected, park mower for min. 8 hours.', 4)
+                  end
+              end
+          else
+              -- mower is parked check if rain delay was active...
               if (delayUntilTime > 0 ) then
                   -- rain delay was active but it is dry for two hours now
                   -- start mowing again!
                   rainDelayVar = intensiteit .. "|0"
                   fibaro:setGlobal("MowerRainDelay", rainDelayVar)
                   if (tonumber(fibaro:getGlobalValue("MowerPushSend")) ~= 0) then 
-                       fibaro:call(phoneId, "sendPush", "Het is droog, het maaien wordt hervat.")
-                       sendMowerCommand("start_resume_schedule")
-                       fibaro:setGlobal("MowerPushSend", 0)
+                        fibaro:call(phoneId, "sendPush", "Het is droog, het maai programma wordt hervat.")
+                        sendMowerCommand("start_resume_schedule")
+                        fibaro:setGlobal("MowerPushSend", 0)
+                        log('Rain is gone, resume mowing schedule.', 4)
                   end
               else
-                  -- rain delay is not active, do check for rain!
-                  if (intensiteit == 0) then
-                      -- no rain!
-                  elseif ((intensiteit*10) <= 20) then -- muliply by 10 because of stupid float and if statement.
-                      rainDelayVar = intensiteit .. "|0"
-                      fibaro:setGlobal("MowerRainDelay", rainDelayVar)
-                      if (tonumber(fibaro:getGlobalValue("MowerPushSend")) ~= 1) then 
-                          fibaro:call(phoneId, "sendPush", "Maaier wordt niet geparkeerd ondanks " .. intensiteit .. " mm/u neerslag om " .. tijd)
-                          fibaro:setGlobal("MowerPushSend", 1)
-                      end
-                  elseif ((intensiteit*10) <= 50) then
-                      rainDelayVar = intensiteit .. "|" .. currentime+7200
-                      fibaro:setGlobal("MowerRainDelay", rainDelayVar)
-                      -- park mower
-                      if (tonumber(fibaro:getGlobalValue("MowerPushSend")) ~= 2) then 
-                          fibaro:call(phoneId, "sendPush", "Maaier wordt tijdelijk geparkeerd i.v.m. " .. intensiteit .. " mm/u neerslag om " .. tijd)
-                          sendMowerCommand("park_until_further_notice")
-                          fibaro:setGlobal("MowerPushSend", 2)
-                      end
-                  else
-                      -- just park until tomorrow, its raining a lot...
-                      rainDelayVar = intensiteit .. "|0"
-                      fibaro:setGlobal("MowerRainDelay", rainDelayVar)
-                      -- park mower until tomorrow
-                      if (tonumber(fibaro:getGlobalValue("MowerPushSend")) ~= 5) then 
-                          fibaro:call(phoneId, "sendPush", "Maaier wordt tot morgen geparkeerd i.v.m. " .. intensiteit .. " mm/u neerslag om " .. tijd)
-                          sendMowerCommand("park_until_next_timer")
-                          fibaro:setGlobal("MowerPushSend", 5)
-                      end
-                  end
+                  -- mower is already parked, do nothing
+                  log("Mower is parked, do nothing for now.", 83)
               end
-          else
-              -- mower is already parked, do nothing
-              log("Mower is parked, do nothing for now.", 83)
           end
       end
   end
