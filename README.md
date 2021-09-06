@@ -1,2 +1,2 @@
 # fibaro
-Fibaro LUA scenes for Home Center 2
+Fibaro LUA scenes for Home Center 2 and 3
