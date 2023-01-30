@@ -1,0 +1,22 @@
+[
+  {
+    "name": "SONOSGRP",
+    "version": "1.0",
+    "changelog": ""
+  },
+  {
+    "name": "HWWIFIP1",
+    "version": "1.0",
+    "changelog": ""
+  },
+  {
+    "name": "QAP1WIFIGW",
+    "version": "1.0",
+    "changelog": "Updated for the new firmware!"
+  },
+  {
+    "name": "SOMFY",
+    "version": "1.0",
+    "changelog": ""
+  }
+]
