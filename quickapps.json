@@ -21,7 +21,7 @@
   },
   {
     "name": "QAHOMECONNECT",
-    "version": "0.6",
-    "changelog": "This is a test message"
+    "version": "0.7",
+    "changelog": "Fixed a bug with the appliance table in the log."
   }
 ]
